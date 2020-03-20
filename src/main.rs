@@ -4,15 +4,16 @@ struct Evaluator {
 }
 
 #[derive(Debug, PartialEq)]
-enum Operator {
-    Add
+enum Token {
+    Value(f64),
+    Add,
 }
 
 #[derive(Debug, PartialEq)]
-enum Expression {
-    Val(f64),
-    Op(Operator),
-    Branch(Box<Expression>, Box<Expression>),
+struct Expr {
+    value: Token,
+    left: Option<Box<Expr>>,
+    right: Option<Box<Expr>>,
 }
 
 impl Evaluator {
@@ -20,26 +21,92 @@ impl Evaluator {
         Evaluator {expression}
     }
 
-    fn build_expr(&self) -> Expression {
-        Expression::Val(1f64)
-    }
-
-    fn eval_expr(expr: Expression) -> f64 {
-        match expr {
-            Expression::Val(result) => result,
-            Expression::Op(op) => {
-
-            }
-            Expression::Branch(l, r) => {
-
-            }
+    fn build_expr(&self) -> Expr {
+        Expr {
+            value: Token::Value(1f64),
+            left: None,
+            right: None
         }
     }
 
+    fn eval_expr(expr: Expr) -> f64 {
+
+        // let Expr { value, left, right } = expr;
+        //
+        // if let Some(boxed_expr) = left {
+        //
+        // }
+        //
+        // if let Some(boxed_expr) = right {
+        //
+        // }
+        //
+        // if let Token::Value(result) = value {
+        //     return result;
+        // }
+
+        match expr {
+            Expr {value: value, left: Some(left_expr), right: Some(right_expr) } => {
+
+                let left_res = Evaluator::eval_expr(*left_expr);
+                let right_res = Evaluator::eval_expr(*right_expr);
+
+                match value {
+                    Token::Value(num) => {
+                        // should be an error
+                        0f64
+                    },
+                    Token::Add => {
+                        left_res + right_res
+                    },
+                }
+            },
+
+            Expr {value: value, left: None, right: Some(right_expr)} => {
+
+                let right_res = Evaluator::eval_expr(*right_expr);
+
+                match value {
+                    Token::Value(num) => {
+                        // should be an error
+                        0f64
+                    },
+                    Token::Add => {
+                        right_res
+                    },
+                }
+            },
+
+            Expr {value: value, left: Some(left_expr), right: None} => {
+                let left_res = Evaluator::eval_expr(*left_expr);
+
+                match value {
+                    Token::Value(num) => {
+                        // should be an error
+                        0f64
+                    },
+                    Token::Add => {
+                        left_res
+                    },
+                }
+            },
+            Expr {value: Token::Value(result), left: None, right: None} => {
+                result
+            },
+            _ => {
+                // The function should return a result
+                // Expression is not valid
+                println!("Some error has occurred");
+                0f64
+            }
+        }
+
+        //0f64
+    }
 
     fn eval(&self) -> f64 {
-        let expr = build_expr();
-        let result = eval_expr(expr);
+        let expr = self.build_expr();
+        let result = Evaluator::eval_expr(expr);
 
         result
         //10.0
@@ -65,28 +132,87 @@ mod tests {
     use crate::*;
 
     #[test]
-    fn expression_builder_test() {
+    fn eval_expr_with_just_value() {
+        let expr = Expr {
+            value: Token::Value(2f64),
+            left: None,
+            right: None,
+        };
 
-        let sub_node = Expression::Branch(Box::new(Expression::Val(1f64)), Box::new(Expression::Val(2f64)));
-        let expr = Expression::Branch(Box::new(Expression::Op(Operator::Add)), Box::new(sub_node));
-
-        let placeholder = Expression::Val(1f64);
-        let evaluator = Evaluator::new("1 + 2".to_string());
-
-        // Build expression manually, and test if the build Expression is the same
-        assert_eq!(placeholder, evaluator.build_expr());
+        assert_eq!(2f64, Evaluator::eval_expr(expr));
     }
 
     #[test]
-    fn it_runs() {
-        let expression = "1 + 2".to_string();
+    fn eval_expr_with_simple_add() {
 
-        // Todo: Remove the clone and use reference instead
-        let evaluator = Evaluator::new(expression.clone());
-        println!("Expression: {}", expression);
+        let left = Expr {
+            value: Token::Value(1f64),
+            left: None,
+            right: None,
+        };
 
-        let result = evaluator.eval();
-        println!("Result = {}", result);
+        let right = Expr {
+            value: Token::Value(1f64),
+            left: None,
+            right: None,
+        };
+
+        let expr = Expr {
+            value: Token::Add,
+            left: Some(Box::new(left)),
+            right: Some(Box::new(right)),
+        };
+
+        assert_eq!(2f64, Evaluator::eval_expr(expr));
     }
 
+    #[test]
+    fn eval_expr_with_nested_add() {
+
+        // (1 + 1) + (1 + 1)
+
+        let l_left = Expr {
+            value: Token::Value(1f64),
+            left: None,
+            right: None,
+        };
+
+        let l_right = Expr {
+            value: Token::Value(1f64),
+            left: None,
+            right: None,
+        };
+
+        let r_left = Expr {
+            value: Token::Value(1f64),
+            left: None,
+            right: None,
+        };
+
+        let r_right = Expr {
+            value: Token::Value(1f64),
+            left: None,
+            right: None,
+        };
+
+        let left_expr = Expr {
+            value: Token::Add,
+            left: Some(Box::new(l_left)),
+            right: Some(Box::new(l_right)),
+        };
+
+        let right_expr = Expr {
+            value: Token::Add,
+            left: Some(Box::new(r_left)),
+            right: Some(Box::new(r_right)),
+        };
+
+        let expr = Expr {
+            value: Token::Add,
+            left: Some(Box::new(left_expr)),
+            right: Some(Box::new(right_expr)),
+        };
+
+        assert_eq!(4f64, Evaluator::eval_expr(expr));
+    }
 }
