@@ -1,4 +1,5 @@
 // The return value of eval_expr might need to be Result<f64> or Option.
+/// The order of operation should be handled by the structure of the tree
 struct Evaluator {
     expression: String,
 }
@@ -7,6 +8,7 @@ struct Evaluator {
 enum Token {
     Value(f64),
     Add,
+    Mult,
 }
 
 #[derive(Debug, PartialEq)]
@@ -31,20 +33,6 @@ impl Evaluator {
 
     fn eval_expr(expr: Expr) -> f64 {
 
-        // let Expr { value, left, right } = expr;
-        //
-        // if let Some(boxed_expr) = left {
-        //
-        // }
-        //
-        // if let Some(boxed_expr) = right {
-        //
-        // }
-        //
-        // if let Token::Value(result) = value {
-        //     return result;
-        // }
-
         match expr {
             Expr {value: value, left: Some(left_expr), right: Some(right_expr) } => {
 
@@ -55,6 +43,9 @@ impl Evaluator {
                     Token::Value(num) => {
                         // should be an error
                         0f64
+                    },
+                    Token::Mult => {
+                        left_res * right_res
                     },
                     Token::Add => {
                         left_res + right_res
@@ -71,6 +62,10 @@ impl Evaluator {
                         // should be an error
                         0f64
                     },
+                    Token::Mult => {
+                        // should be an error
+                        0f64
+                    },
                     Token::Add => {
                         right_res
                     },
@@ -82,6 +77,10 @@ impl Evaluator {
 
                 match value {
                     Token::Value(num) => {
+                        // should be an error
+                        0f64
+                    },
+                    Token::Mult => {
                         // should be an error
                         0f64
                     },
@@ -100,8 +99,6 @@ impl Evaluator {
                 0f64
             }
         }
-
-        //0f64
     }
 
     fn eval(&self) -> f64 {
@@ -143,6 +140,127 @@ mod tests {
     }
 
     #[test]
+    fn eval_expr_with_simple_mult() {
+        let left = Expr {
+            value: Token::Value(2f64),
+            left: None,
+            right: None,
+        };
+
+        let right = Expr {
+            value: Token::Value(2f64),
+            left: None,
+            right: None,
+        };
+
+        let expr = Expr {
+            value: Token::Mult,
+            left: Some(Box::new(left)),
+            right: Some(Box::new(right)),
+        };
+
+        assert_eq!(4f64, Evaluator::eval_expr(expr));
+    }
+
+    #[test]
+    fn eval_expr_with_nested_mult() {
+        // (1 + 1) + (1 + 1)
+
+        let l_left = Expr {
+            value: Token::Value(2f64),
+            left: None,
+            right: None,
+        };
+
+        let l_right = Expr {
+            value: Token::Value(3f64),
+            left: None,
+            right: None,
+        };
+
+        let r_left = Expr {
+            value: Token::Value(4f64),
+            left: None,
+            right: None,
+        };
+
+        let r_right = Expr {
+            value: Token::Value(5f64),
+            left: None,
+            right: None,
+        };
+
+        let left_expr = Expr {
+            value: Token::Mult,
+            left: Some(Box::new(l_left)),
+            right: Some(Box::new(l_right)),
+        };
+
+        let right_expr = Expr {
+            value: Token::Mult,
+            left: Some(Box::new(r_left)),
+            right: Some(Box::new(r_right)),
+        };
+
+        let expr = Expr {
+            value: Token::Mult,
+            left: Some(Box::new(left_expr)),
+            right: Some(Box::new(right_expr)),
+        };
+
+        assert_eq!(120f64, Evaluator::eval_expr(expr));
+    }
+
+    #[test]
+    fn eval_expr_with_complex_mult() {
+        // 1 + (2 * 3) + 4
+
+        let l_left = Expr {
+            value: Token::Value(1f64),
+            left: None,
+            right: None,
+        };
+
+        let l_right_l = Expr {
+            value: Token::Value(2f64),
+            left: None,
+            right: None,
+        };
+
+        let l_right_r = Expr {
+            value: Token::Value(3f64),
+            left: None,
+            right: None,
+        };
+
+        let r_left = Expr {
+            value: Token::Value(4f64),
+            left: None,
+            right: None,
+        };
+
+        let l_right_expr = Expr {
+            value: Token::Mult,
+            left: Some(Box::new(l_right_l)),
+            right: Some(Box::new(l_right_r)),
+        };
+
+        let left_expr = Expr {
+            value: Token::Add,
+            left: Some(Box::new(l_left)),
+            right: Some(Box::new(l_right_expr)),
+        };
+
+        let expr = Expr {
+            value: Token::Add,
+            left: Some(Box::new(left_expr)),
+            right: Some(Box::new(r_left)),
+        };
+
+        assert_eq!(11f64, Evaluator::eval_expr(expr));
+    }
+
+    #[test]
     fn eval_expr_with_simple_add() {
 
         let left = Expr {
@@ -178,19 +296,19 @@ mod tests {
         };
 
         let l_right = Expr {
-            value: Token::Value(1f64),
+            value: Token::Value(2f64),
             left: None,
             right: None,
         };
 
         let r_left = Expr {
-            value: Token::Value(1f64),
+            value: Token::Value(3f64),
             left: None,
             right: None,
         };
 
         let r_right = Expr {
-            value: Token::Value(1f64),
+            value: Token::Value(4f64),
             left: None,
             right: None,
         };
@@ -213,6 +331,6 @@ mod tests {
             right: Some(Box::new(right_expr)),
         };
 
-        assert_eq!(4f64, Evaluator::eval_expr(expr));
+        assert_eq!(10f64, Evaluator::eval_expr(expr));
     }
 }
