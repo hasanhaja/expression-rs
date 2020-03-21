@@ -1,5 +1,7 @@
 // The return value of eval_expr might need to be Result<f64> or Option.
-/// The order of operation should be handled by the structure of the tree
+/// The order of operation should be handled by the structure of the tree.
+/// So since the tree is recursive, the structure should enable correctness.
+/// However, it does not inherently ensure simplicity of the tree
 struct Evaluator {
     expression: String,
 }
@@ -9,6 +11,8 @@ enum Token {
     Value(f64),
     Add,
     Mult,
+    //LParen,
+    //RParen,
 }
 
 #[derive(Debug, PartialEq)]
@@ -21,6 +25,37 @@ struct Expr {
 impl Evaluator {
     fn new(expression: String) -> Evaluator {
         Evaluator {expression}
+    }
+
+    /// This function expects an expression seperated by spaces
+    fn extract_chars(&self) -> Vec<char> {
+        self.expression.chars().into_iter()
+            .filter(|x| !x.is_ascii_whitespace())
+            .collect()
+    }
+
+    /// 1 + 2 -> (1 + 2)
+    /// 1 + 2 * 3 -> (1 + (2 * 3))
+    fn insert_parens(char_tokens: Vec<char>) -> Vec<char> {
+
+        char_tokens
+    }
+
+    /// (1 + 2) -> (+ 1 2)
+    /// (1 + (2 * 3)) -> (+ * 2 3 1)
+    fn into_polish(char_tokens: Vec<char>) -> Vec<char> {
+        char_tokens
+    }
+
+    /// (+ * 2 3 1) -> Expr(add, left(1), right(Expr(mult), l(2), r(3)))
+    fn polish_to_expr(polish_tokens: Vec<Char>) -> Expr {
+
+
+        Expr {
+            value: Token::Value(1f64),
+            left: None,
+            right: None,
+        }
     }
 
     fn build_expr(&self) -> Expr {
@@ -213,8 +248,9 @@ mod tests {
 
     #[test]
     fn eval_expr_with_complex_mult() {
-        // 1 + (2 * 3) + 4
-
+        /// The tree is built to represent this: 1 + (2 * 3) + 4
+        /// However, an alternative structure would be 1 + 4 + (2 * 3)
+        /// and the tree does not handle that
         let l_left = Expr {
             value: Token::Value(1f64),
             left: None,
