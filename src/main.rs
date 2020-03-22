@@ -2,6 +2,8 @@
 /// The order of operation should be handled by the structure of the tree.
 /// So since the tree is recursive, the structure should enable correctness.
 /// However, it does not inherently ensure simplicity of the tree
+///
+/// Decimal numbers can't be represented as a char, there it must be a string to &str
 struct Evaluator {
     expression: String,
 }
@@ -47,15 +49,55 @@ impl Evaluator {
         char_tokens
     }
 
-    /// (+ * 2 3 1) -> Expr(add, left(1), right(Expr(mult), l(2), r(3)))
-    fn polish_to_expr(polish_tokens: Vec<Char>) -> Expr {
-
-
-        Expr {
-            value: Token::Value(1f64),
-            left: None,
-            right: None,
+    fn select_operator(token: &char) -> Option<Token> {
+        match token {
+            '+' => Some(Token::Add),
+            '*' => Some(Token::Mult),
+            _ => None,
         }
+    }
+
+    fn is_operator(token: &char) -> bool {
+        match Evaluator::select_operator(token) {
+            Some(_) => true,
+            None => false,
+        }
+    }
+
+    /// This will have to be a recursive function
+    /// (+ * 2 3 1) -> Expr(add, left(1), right(Expr(mult), l(2), r(3)))
+    fn polish_to_expr(polish_tokens: Vec<char>) -> Expr {
+
+        // Todo: if the vec is empty, return error
+        // if the vec is of size 1 and is value, then return value wrapped in Expr
+
+        // Todo: strip parentheses, drop first and last elems
+        // Should the input be mutable, or can we just slice it?
+
+        let op: Token;
+
+        let first = polish_tokens.first().unwrap();
+        let last = polish_tokens.last().unwrap();
+
+
+        if !Evaluator::is_operator(first) {
+
+            // parse the first elem and convert it to f64
+
+            Expr {
+                value: Token::Value(1f64),
+                left: None,
+                right: None,
+            }
+        } else {
+            Expr {
+                value: Token::Add,  // Logic to identify and select the correct operator
+                left: None,         // recursively pass the remainder of the vec here
+                right: None,        // pop last here
+            }
+        }
+
+
     }
 
     fn build_expr(&self) -> Expr {
