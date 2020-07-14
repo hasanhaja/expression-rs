@@ -29,11 +29,57 @@ impl Evaluator {
         Evaluator {expression}
     }
 
-    /// This function expects an expression seperated by spaces
+    /// This function takes an expression, and tokenizes every char into a vector element.
+    /// i.e. "12 + 232" -> ["1", "2", "+", "2", "3", "2"]
+    /// and not "12 + 232" -> ["12", "+", "232"]
     fn extract_chars(&self) -> Vec<char> {
         self.expression.chars().into_iter()
             .filter(|x| !x.is_ascii_whitespace())
             .collect()
+    }
+
+    /// This takes a vector of individual chars and it groups them into numbers and operators
+    fn extract_chars_grouped(&self) -> Vec<String> {
+        let chars = self.extract_chars();
+
+        let mut grouped: Vec<String> = Vec::new();
+
+        let mut temp = "".to_string();
+
+        for (i, char) in chars.iter().enumerate() {
+            match char {
+                '+' | '-' | '*' | '/' => {
+                    if !temp.is_empty() {
+                        grouped.push(temp.clone());
+                        temp = "".to_string();
+                    }
+
+                    grouped.push(char.to_string());
+                },
+                _ => {
+                    temp.push(*char);
+
+                    if i == chars.len() - 1 {
+                        grouped.push(temp.clone());
+                    }
+                },
+            }
+        }
+        grouped
+    }
+
+    /// This function takes an expression, and tokenizes every number into a vector element.
+    /// i.e. "12 + 232" -> ["12", "+", "232"]
+    /// and not "12 + 232" -> ["1", "2", "+", "2", "3", "2"]
+    /// /// and not ["1", "2", "+", "2", "3", "2"] -> ["12", "+", "232"]
+    fn extract_tokens(&self) -> Vec<Token> {
+        let chars = self.extract_chars_grouped();
+
+        let mut tokens: Vec<Token> = Vec::new();
+
+        // append the chars unless it's a token
+
+        tokens
     }
 
     /// 1 + 2 -> (1 + 2)
@@ -46,6 +92,7 @@ impl Evaluator {
     /// (1 + 2) -> (+ 1 2)
     /// (1 + (2 * 3)) -> (+ * 2 3 1)
     fn into_polish(char_tokens: Vec<char>) -> Vec<char> {
+        // TODO pending implementation
         char_tokens
     }
 
@@ -190,20 +237,41 @@ impl Evaluator {
 
 fn main() {
 
-    let expression = "1 + 2".to_string();
+    let expression = "12 + 232".to_string();
 
     // Todo: Remove the clone and use reference instead
-    let evaluator = Evaluator::new(expression.clone());
-    println!("Expression: {}", expression);
+    // let evaluator = Evaluator::new(expression.clone());
+    // println!("Expression: {}", expression);
+    //
+    // let result = evaluator.eval();
+    // println!("Result = {}", result);
 
-    let result = evaluator.eval();
-    println!("Result = {}", result);
+    let eval = Evaluator::new(expression.clone());
+
+    println!("{:?}", eval.extract_chars());
+    println!("{:?}", eval.extract_chars_grouped());
 
 }
 
 #[cfg(test)]
 mod tests {
     use crate::*;
+
+    #[test]
+    fn extract_char_with_spaces() {
+        let expr = "12 + 2";
+        let eval = Evaluator::new(expr.to_string());
+
+        assert_eq!(3usize, eval.extract_chars().len());
+    }
+
+    #[test]
+    fn extract_char_without_spaces() {
+        let expr = "1+2";
+        let eval = Evaluator::new(expr.to_string());
+
+        assert_eq!(3usize, eval.extract_chars().len());
+    }
 
     #[test]
     fn eval_expr_with_just_value() {
