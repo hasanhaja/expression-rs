@@ -12,6 +12,8 @@ struct Evaluator {
 enum Token {
     Value(f64),
     Add,
+    Subtract,
+    Divide,
     Mult,
     //LParen,
     //RParen,
@@ -75,7 +77,23 @@ impl Evaluator {
     fn extract_tokens(&self) -> Vec<Token> {
         let chars = self.extract_chars_grouped();
 
-        let mut tokens: Vec<Token> = Vec::new();
+        // let mut tokens: Vec<Token> = Vec::new();
+
+        let mut tokens: Vec<Token> = chars.iter()
+            .map(|symbol|
+                match symbol.as_str() {
+                "+" | "-" | "*" | "/" => {
+                    let op = Evaluator::select_operator(&symbol.as_str().chars().last().unwrap()).unwrap();
+                    op
+                },
+                _ => {
+                    let value: f64 = symbol.parse().unwrap();
+                    Token::Value(value)
+                }
+            })
+            .collect();
+
+
 
         // append the chars unless it's a token
 
@@ -84,9 +102,24 @@ impl Evaluator {
 
     /// 1 + 2 -> (1 + 2)
     /// 1 + 2 * 3 -> (1 + (2 * 3))
-    fn insert_parens(char_tokens: Vec<char>) -> Vec<char> {
+    fn insert_parens(tokens: Vec<Token>) -> Vec<Token> {
 
-        char_tokens
+        let mut resultant: Vec<Token> = Vec::new();
+
+        for (i, token) in tokens.iter().enumerate() {
+            if i == 0 {
+                match token {
+                    Token::Value(_) => todo!("Parentheses needs implementing"),
+                    _ => todo!()
+                }
+            }
+
+            match token {
+                _ => todo!("Find an operator and put a parentheses surrounding the elements around it.")
+            }
+        }
+
+        tokens
     }
 
     /// (1 + 2) -> (+ 1 2)
@@ -100,6 +133,8 @@ impl Evaluator {
         match token {
             '+' => Some(Token::Add),
             '*' => Some(Token::Mult),
+            '-' => Some(Token::Subtract),
+            '/' => Some(Token::Divide),
             _ => None,
         }
     }
@@ -147,14 +182,16 @@ impl Evaluator {
 
     }
 
+    // TODO this is placeholder
     fn build_expr(&self) -> Expr {
         Expr {
-            value: Token::Value(1f64),
+            value: Token::Value(0f64),
             left: None,
             right: None
         }
     }
 
+    // TODO: This function is hacked on and there is a lot of repetition.
     fn eval_expr(expr: Expr) -> f64 {
 
         match expr {
@@ -174,6 +211,14 @@ impl Evaluator {
                     Token::Add => {
                         left_res + right_res
                     },
+                    Token::Subtract => {
+                        0f64
+                    },
+
+                    Token::Divide => {
+                        0f64
+                    },
+
                 }
             },
 
@@ -193,6 +238,14 @@ impl Evaluator {
                     Token::Add => {
                         right_res
                     },
+
+                    Token::Subtract => {
+                        0f64
+                    },
+
+                    Token::Divide => {
+                        0f64
+                    },
                 }
             },
 
@@ -210,6 +263,14 @@ impl Evaluator {
                     },
                     Token::Add => {
                         left_res
+                    },
+
+                    Token::Subtract => {
+                        0f64
+                    },
+
+                    Token::Divide => {
+                        0f64
                     },
                 }
             },
@@ -237,7 +298,7 @@ impl Evaluator {
 
 fn main() {
 
-    let expression = "12 + 232".to_string();
+    let expression = "12.12 + 232 - 2.1".to_string();
 
     // Todo: Remove the clone and use reference instead
     // let evaluator = Evaluator::new(expression.clone());
@@ -248,9 +309,9 @@ fn main() {
 
     let eval = Evaluator::new(expression.clone());
 
-    println!("{:?}", eval.extract_chars());
     println!("{:?}", eval.extract_chars_grouped());
 
+    println!("{:?}", eval.extract_tokens());
 }
 
 #[cfg(test)]
@@ -271,6 +332,26 @@ mod tests {
         let eval = Evaluator::new(expr.to_string());
 
         assert_eq!(3usize, eval.extract_chars().len());
+    }
+
+    #[test]
+    fn tokenize_string_to_vector_of_chars() {
+        let expression = "12 + 232".to_string();
+        let result = vec!['1', '2', '+', '2', '3', '2'];
+
+        let eval = Evaluator::new(expression.clone());
+
+        assert_eq!(result, eval.extract_chars());
+    }
+
+    #[test]
+    fn tokenize_string_to_vector_of_string() {
+        let expression = "12 + 232".to_string();
+        let result = vec!["12".to_string(), "+".to_string(), "232".to_string()];
+
+        let eval = Evaluator::new(expression.clone());
+
+        assert_eq!(result, eval.extract_chars_grouped());
     }
 
     #[test]
